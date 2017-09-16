@@ -18,9 +18,10 @@ I have not finished it yet, but the model is already able to work.
 - put images in demo/ and run python RefineNet/demo.py 
 
 ## some result
-![1](result/2007_000648.jpg)
-![2](result/2007_000664.jpg)
-![3](result/2007_000676.jpg)
-![4](result/2007_000713.jpg)
-![5](result/2007_000733.jpg)
-![6](result/2007_000738.jpg)
+See folder demo/ for the origin images
+![1](result/2007_000648.jpg "2007_000648")
+![2](result/2007_000664.jpg "2007_000664")
+![3](result/2007_000676.jpg "2007_000676")
+![4](result/2007_000713.jpg "2007_000713")
+![5](result/2007_000733.jpg "2007_000733")
+![6](result/2007_000738.jpg "2007_000738")
