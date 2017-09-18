@@ -18,6 +18,12 @@ this is a tensorflow implement of refinenet discribed in [arxiv:1611.06612](http
 - if you have already got a model, or just download the model I trained on pascal voc.[model](http://pan.baidu.com/s/1kVefEIj).
 - put images in demo/ and run python RefineNet/demo.py 
 
+## roadmap
+- [x] python2/3 compatibility
+- [ ] Complete realization of refinenet model
+- [ ] test on pascal voc, give the IoU result
+- [ ] training on other datasets
+
 ## some result
 <img src="/demo/2007_000713.jpg" width=256 height=256 /><img src="/demo/2007_000733.jpg" width=256 height=256 /><img src="/demo/2007_000738.jpg" width=256 height=256 />
 <img src="/result/2007_000713.jpg" width=256 height=256 /><img src="/result/2007_000733.jpg" width=256 height=256 /><img src="/result/2007_000738.jpg" width=256 height=256 />
