@@ -2,4 +2,4 @@
 *.tfrecords
 checkpoints/
 logs/
-
+*.pyc
