@@ -1,5 +1,7 @@
 # refinenet（in work condition）
 a tensorflow implement of refinenet. RefineNet: Multi-Path Refinement Networks for High-Resolution Semantic Segmentation
+- model in master branch is slightly different from the origin paper. only 1 RCU used in each refinenet block
+- model in dev branch is build exactly according to the paper. But I find it hard to converge, I'm still working on it.
 
 
 ## Introduction
