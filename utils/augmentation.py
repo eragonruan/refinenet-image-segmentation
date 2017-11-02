@@ -240,8 +240,8 @@ def scale_randomly_image_with_annotation_with_fixed_size_output(img_tensor,
     cropped_padded_img = tf.image.resize_image_with_crop_or_pad( resized_img, output_shape[0], output_shape[1] )
 
     cropped_padded_annotation = tf.image.resize_image_with_crop_or_pad(annotation_shifted_classes,
-                                                                       output_shape[0],
-                                                                       output_shape[1])
+                                                                       output_shape[0]//4,
+                                                                       output_shape[1]//4)
     
     # TODO: accept the classes lut instead of mask out
     # value as an argument

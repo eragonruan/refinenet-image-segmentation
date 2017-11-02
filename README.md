@@ -1,4 +1,4 @@
-# refinenet（in work condition）
+# refinenet
 a tensorflow implement of refinenet. RefineNet: Multi-Path Refinement Networks for High-Resolution Semantic Segmentation
 
 
@@ -19,7 +19,7 @@ this is a tensorflow implement of refinenet discribed in [arxiv:1611.06612](http
 - put images in demo/ and run python RefineNet/demo.py 
 
 ## roadmap
-- [ ] python2/3 compatibility
+- [x] python2/3 compatibility
 - [ ] Complete realization of refinenet model
 - [ ] test on pascal voc, give the IoU result
 - [ ] training on other datasets

@@ -14,40 +14,77 @@ def ResidualConvUnit(inputs,features=256,kernel_size=3):
     net=tf.nn.relu(net)
     net=slim.conv2d(net,features,kernel_size)
     net=tf.add(net,inputs)
-
     return net
 
-def MultiResolutionFusion(high_inputs=None,low_inputs=None,up0=2,up1=1,n_i=256):
-
-    g0 = unpool(slim.conv2d(high_inputs, n_i, 3), scale=up0)
-
-    if low_inputs is None:
-        return g0
-
-    g1=unpool(slim.conv2d(low_inputs,n_i,3),scale=up1)
-    return tf.add(g0,g1)
-
-def ChainedResidualPooling(inputs,n_i=256):
+def ChainedResidualPooling(inputs,features=256):
     net_relu=tf.nn.relu(inputs)
     net=slim.max_pool2d(net_relu, [5, 5],stride=1,padding='SAME')
-    net=slim.conv2d(net,n_i,3)
-    return tf.add(net,net_relu)
+    net=slim.conv2d(net,features,3)
+    net_sum_1=tf.add(net,net_relu)
+
+    net = slim.max_pool2d(net_relu, [5, 5], stride=1, padding='SAME')
+    net = slim.conv2d(net, features, 3)
+    net_sum_2=tf.add(net,net_sum_1)
+
+    return net_sum_2
+
+
+def MultiResolutionFusion(high_inputs=None,low_inputs=None,features=256):
+
+    if high_inputs is None:#refineNet block 4
+        rcu_low_1 = low_inputs[0]
+        rcu_low_2 = low_inputs[1]
+
+        rcu_low_1 = slim.conv2d(rcu_low_1, features, 3)
+        rcu_low_2 = slim.conv2d(rcu_low_2, features, 3)
+
+        return tf.add(rcu_low_1,rcu_low_2)
+
+    else:
+        rcu_low_1 = low_inputs[0]
+        rcu_low_2 = low_inputs[1]
+
+        rcu_low_1 = slim.conv2d(rcu_low_1, features, 3)
+        rcu_low_2 = slim.conv2d(rcu_low_2, features, 3)
+
+        rcu_low = tf.add(rcu_low_1,rcu_low_2)
+
+        rcu_high_1 = high_inputs[0]
+        rcu_high_2 = high_inputs[1]
+
+        rcu_high_1 = unpool(slim.conv2d(rcu_high_1, features, 3),2)
+        rcu_high_2 = unpool(slim.conv2d(rcu_high_2, features, 3),2)
+
+        rcu_high = tf.add(rcu_high_1,rcu_high_2)
+
+        return tf.add(rcu_low, rcu_high)
+
 
 def RefineBlock(high_inputs=None,low_inputs=None):
-    if low_inputs is not None:
-        print(high_inputs.shape)
-        rcu_high=ResidualConvUnit(high_inputs,features=256)
-        rcu_low=ResidualConvUnit(low_inputs,features=256)
-        fuse=MultiResolutionFusion(rcu_high,rcu_low,up0=2,up1=1,n_i=256)
-        fuse_pooling=ChainedResidualPooling(fuse,n_i=256)
-        output=ResidualConvUnit(fuse_pooling,features=256)
-        return output
-    else:
-        rcu_high = ResidualConvUnit(high_inputs, features=256)
-        fuse = MultiResolutionFusion(rcu_high, low_inputs=None, up0=1,  n_i=256)
-        fuse_pooling = ChainedResidualPooling(fuse, n_i=256)
+
+    if high_inputs is None: # block 4
+        rcu_low_1= ResidualConvUnit(low_inputs, features=256)
+        rcu_low_2 = ResidualConvUnit(low_inputs, features=256)
+        rcu_low = [rcu_low_1, rcu_low_2]
+
+        fuse = MultiResolutionFusion(high_inputs=None, low_inputs=rcu_low, features=256)
+        fuse_pooling = ChainedResidualPooling(fuse, features=256)
         output = ResidualConvUnit(fuse_pooling, features=256)
         return output
+    else:
+        rcu_low_1 = ResidualConvUnit(low_inputs, features=256)
+        rcu_low_2 = ResidualConvUnit(low_inputs, features=256)
+        rcu_low = [rcu_low_1, rcu_low_2]
+
+        rcu_high_1 = ResidualConvUnit(high_inputs, features=256)
+        rcu_high_2 = ResidualConvUnit(high_inputs, features=256)
+        rcu_high = [rcu_high_1, rcu_high_2]
+
+        fuse = MultiResolutionFusion(rcu_high, rcu_low,features=256)
+        fuse_pooling = ChainedResidualPooling(fuse, features=256)
+        output = ResidualConvUnit(fuse_pooling, features=256)
+        return output
+
 
 
 def model(images, weight_decay=1e-5, is_training=True):
@@ -57,17 +94,13 @@ def model(images, weight_decay=1e-5, is_training=True):
         logits, end_points = resnet_v1.resnet_v1_101(images, is_training=is_training, scope='resnet_v1_101')
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
-        batch_norm_params = {
-        'decay': 0.997,
-        'epsilon': 1e-5,
-        'scale': True,
-        'is_training': is_training
-        }
+        batch_norm_params = {'decay': 0.997,'epsilon': 1e-5,'scale': True,'is_training': is_training}
         with slim.arg_scope([slim.conv2d],
                             activation_fn=tf.nn.relu,
                             normalizer_fn=slim.batch_norm,
                             normalizer_params=batch_norm_params,
                             weights_regularizer=slim.l2_regularizer(weight_decay)):
+
             f = [end_points['pool5'], end_points['pool4'],
                  end_points['pool3'], end_points['pool2']]
             for i in range(4):
@@ -81,17 +114,18 @@ def model(images, weight_decay=1e-5, is_training=True):
             for i in range(4):
                 print('Shape of h_{} {}'.format(i, h[i].shape))
 
-            g[0]=RefineBlock(h[0])
+            g[0]=RefineBlock(high_inputs=None,low_inputs=h[0])
             g[1]=RefineBlock(g[0],h[1])
             g[2]=RefineBlock(g[1],h[2])
             g[3]=RefineBlock(g[2],h[3])
-            g[3]=unpool(g[3],scale=4)
+            #g[3]=unpool(g[3],scale=4)
             F_score = slim.conv2d(g[3], 21, 1, activation_fn=tf.nn.relu, normalizer_fn=None)
 
     return F_score
 
 
 def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
+    images=tf.to_float(images)
     num_channels = images.get_shape().as_list()[-1]
     if len(means) != num_channels:
       raise ValueError('len(means) must match the number of channels')

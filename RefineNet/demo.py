@@ -2,11 +2,13 @@ import re
 import cv2
 import time
 import os,shutil
+import sys
 import numpy as np
 import tensorflow as tf
 slim = tf.contrib.slim
 
-import model as model
+sys.path.append(os.getcwd())
+from nets import model as model
 from matplotlib import pyplot as plt
 from utils.pascal_voc import pascal_segmentation_lut
 from utils.visualization import visualize_segmentation_adaptive
